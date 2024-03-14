@@ -61,5 +61,5 @@ func main() {
 		return
 	}
 
-	syscall.Syscall(addr, 0, 0, 0, 0)
+	syscall.SyscallN(addr, 0, 0, 0, 0)
 }
